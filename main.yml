@@ -1,0 +1,10 @@
+---
+- name: Register Node
+  hosts: awx
+  vars:
+    node_already_registered: false  
+  vars_files:
+    - vars/global_vars.yml
+  roles:
+    - { role: check_vars }
+    - { role: add_node}

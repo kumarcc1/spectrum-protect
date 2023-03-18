@@ -1,0 +1,48 @@
+- name: check if node exists
+  delegate_to: awx
+  ignore_errors: yes
+  changed_when: no
+  no_log: true
+  command: dsmadmc -se={{ item }} -id={{ sp_client_server_login_id }} -pa={{ sp_client_server_sp_password }} "q node {{ sp_client_node_name }}" 
+  register: node
+  failed_when: ( node.rc in [ 0 ] )
+  with_items: "{{ groups['sp_servers'] }}"
+
+- name: set fact
+  set_fact:
+    node_already_registered: true
+  when: node | failed
+
+- debug:
+    msg: "Node is already registered"
+  when: node_already_registered
+
+- fail:
+    msg: "The client node is already registered ."
+  when: node_already_registered
+
+# Check with server has lowest util and return it
+- name: query all server nodes for util result
+  delegate_to: awx
+  command: dsmadmc -dataonly=yes -se={{ item }} -id={{sp_client_server_login_id}} -pa={{sp_client_server_sp_password}} "SELECT CAST(SUM(100-(free_space_mb*100) / tot_file_system_mb) AS DECIMAL(3,1)) AS PCT_UTILIZED FROM db"
+  register: server_util_raw
+  no_log: true
+  with_items: "{{ groups['sp_servers'] }}"
+- debug: var=server_util_raw.results
+- name: 'set server util facts'
+  set_fact:
+    servers_util: "{{ servers_util|default([]) + [ {'disk_util': item.stdout |replace(' ',''), 'server': item.item, } ] }}"
+  no_log: true
+  with_items: "{{ server_util_raw.results }}"
+- name: "get lowest utilized server"
+  set_fact:
+    server_lowest_util="{{ servers_util | min }}"
+- debug: var=server_lowest_util
+
+# If the node is not registered yet, then let's do it:
+- name: Register the client (on the server)
+  delegate_to: awx
+  command: dsmadmc -se={{ server_lowest_util.server }} -id={{ sp_client_server_login_id }} -pa={{ sp_client_server_sp_password }} run reg_ba_node_test {{ sp_client_node_name }} {{ sp_client_node_password }} {{ sp_client_node_domain }} {{sp_client_node_cloptset }} {{sp_client_customer }}
+  when: server_lowest_util is defined and server_lowest_util != '' and not node_already_registered
+  no_log: true
+

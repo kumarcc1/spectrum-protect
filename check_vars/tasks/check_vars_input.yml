@@ -1,0 +1,29 @@
+- name: check playbook input from user
+  assert:
+    that:
+    - client_fqdn is defined and client_fqdn != ''
+    - domain is defined and domain != ''
+    - cloptset is defined and cloptset != ''
+    - customer is defined and customer != ''
+    msg: "playbook input is missing"
+
+
+- name: check that we have server input
+  assert:
+    that:
+    - sp_client_server_in_inventory is defined and sp_client_server_in_inventory != ''
+    - sp_client_server_login_id is defined and sp_client_server_login_id != ''
+    - sp_client_server_sp_password is defined and sp_client_server_sp_password != ''
+    msg: "some server input is missing"
+
+- name: check that we have client input
+  assert:
+    that:
+    - sp_client_node_password is defined and sp_client_node_password != ''
+    - sp_client_node_name is defined and sp_client_node_name != ''
+    - sp_client_node_domain is defined and sp_client_node_domain != ''
+    - sp_client_node_cloptset is defined and sp_client_node_cloptset != ''
+    - sp_client_customer is defined and sp_client_customer != ''
+    msg: "check client input again, some is missing!"
+
+

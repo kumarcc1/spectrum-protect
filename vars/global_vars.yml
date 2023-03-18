@@ -1,0 +1,16 @@
+######################################################################
+# Server Configuration
+######################################################################
+sp_client_server_login_id: awxtest
+sp_client_server_sp_password: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          xxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# Options used for the registration of the client in the server.
+
+sp_client_node_password: "test"
+sp_client_node_name: "{{ client_fqdn |upper }}"
+sp_client_node_domain: "{{ domain |lower }}"
+sp_client_node_cloptset: "{{ cloptset |lower }}"
+sp_client_customer: "{{ customer |lower }}"
+
